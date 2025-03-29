@@ -217,7 +217,34 @@ app.delete('/delete-events/:id', (req, res) => {
 })
 
 
+app.get("/event/:event_id", (req, res)=>{
+    const eventId = parseInt(req.params.event_id);
+    const query = `SELECT * FROM events WHERE event_id = $1`;
+    client.query(query, [eventId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'error', message: 'Event not found' });
+        }
+        return res.json({ status:'success', data: result.rows[0] });
+    });
 
+})
+
+
+app.get("/event-all",(req, res)=>{
+    const query = `SELECT * FROM events`;
+    client.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+ 
+})
 
 app.listen(3000,()=>{
     console.log('Server is running on port 3000');
