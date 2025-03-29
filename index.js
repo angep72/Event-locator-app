@@ -246,6 +246,40 @@ app.get("/event-all",(req, res)=>{
  
 })
 
+
+//-----------------------------Event Mapping --------------------------------
+app.post("/event-mapping",(req, res)=>{
+    const { event_id, category_id } = req.body;
+
+    if(!event_id ||!category_id){
+        return res.status(400).json({ status: 'error', message: 'Event ID and Category ID are required.' });
+    }
+    const query = `INSERT INTO event_category_mapping(event_id, category_id) VALUES($1, $2) RETURNING *`;
+    client.query(query, [event_id, category_id], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.status(201).json({ status:'success', data: result.rows[0] });
+    });
+
+})
+
+app.get("/event-mapping", (req, res) => {
+    const query = `SELECT * FROM event_category_mapping`;
+    client.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+})
+
+//-----------------------------user preference endpoints-------------------------------------------
+
+app.post("/user-preference", (req, res) => {})
+
 app.listen(3000,()=>{
     console.log('Server is running on port 3000');
 })
