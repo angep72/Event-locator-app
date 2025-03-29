@@ -246,6 +246,22 @@ app.get("/event-all",(req, res)=>{
  
 })
 
+//get list of events with filters
+app.get("/event-filters", (req, res)=>{
+    const { location_id, start_date, end_date } = req.query;
+    let query = `SELECT * FROM events WHERE location_id = $1`;
+    if(start_date && end_date){
+        query += ` AND start_date >= $2 AND end_date <= $3`;
+    }
+    client.query(query, [location_id, start_date, end_date], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+})
+
 
 //-----------------------------Event Mapping --------------------------------
 app.post("/event-mapping",(req, res)=>{
@@ -278,6 +294,8 @@ app.get("/event-mapping", (req, res) => {
 
 //-----------------------------user preference endpoints-------------------------------------------
 
+
+
 app.post("/user-preference", (req, res) => {
     const { user_id, category_id, preferred_location_id,preferred_radius } = req.body;
     if(!user_id ||!category_id ||!preferred_location_id ||!preferred_radius){
@@ -294,6 +312,24 @@ app.post("/user-preference", (req, res) => {
 
 
 })
+
+//GET /users/1/preferences
+
+app.get('/users/:user_id/preferences',(req,res)=>{
+    const userId = parseInt(req.params.user_id);
+    const query = `SELECT * FROM user_preferences WHERE user_id = $1`;
+    client.query(query, [userId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'error', message: 'User preferences not found' });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+})
+
 
 app.get('/user/:user_id/preferences',(req,res)=>{
     const userId = parseInt(req.params.user_id);
@@ -343,11 +379,89 @@ app.post('/event_images',(req,res)=>{
 
 
 
-app.get('/event/:event_id/images',(req,res)=>{})
+app.get('/event/:event_id/images',(req,res)=>{
+    const eventId = parseInt(req.params.event_id);
+    const query = `SELECT * FROM event_images WHERE event_id = $1`;
+    client.query(query, [eventId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'error', message: 'Event images not found' });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
 
-app.get('/event-images',(req,res)=>{})
+})
+
+app.get('/event-images',(req,res)=>{
+    const query = `SELECT * FROM event_images`;
+    client.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+ 
+})
+
+
+
+//-------------notification endpoints --------------------
+app.post('/notifications', async (req, res) => {
+    const { user_id, message, notification_type, event_id, seen } = req.body;
+  
+    try {
+      // Insert notification into the database
+      const result = await client.query(
+        `INSERT INTO notifications (user_id, message, notification_type, event_id, seen) 
+         VALUES ($1, $2, $3, $4, $5) 
+         RETURNING notification_id, user_id, message, notification_type, event_id, seen, created_at`,
+        [user_id, message, notification_type, event_id, seen]
+      );
+  
+      // Get the inserted notification data
+      const notification = result.rows[0];
+      res.status(201).json({
+        message: 'Notification created successfully',
+        notification: notification,
+      });
+    } catch (error) {
+      console.error('Error inserting notification:', error);
+      res.status(500).json({ error: 'Failed to create notification' });
+    }})
+
+
+
+
+    ///GET /users/{user_id}/notifications - Get notifications for a user
+    app.get('/users/:user_id/notifications', async (req, res) => {
+      const userId = parseInt(req.params.user_id);
+  
+      try {
+        // Get notifications for the user
+        const result = await client.query(
+          `SELECT notification_id, user_id, message, notification_type, event_id, seen, created_at 
+           FROM notifications 
+           WHERE user_id = $1`,
+          [userId]
+        );
+  
+        // Get the notifications data
+        const notifications = result.rows;
+        res.json({ notifications });
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ error: 'Failed to fetch notifications' });
+      }
+    });
+
 
 app.listen(3000,()=>{
     console.log('Server is running on port 3000');
 })
 client.connect();
+
+
