@@ -278,7 +278,37 @@ app.get("/event-mapping", (req, res) => {
 
 //-----------------------------user preference endpoints-------------------------------------------
 
-app.post("/user-preference", (req, res) => {})
+app.post("/user-preference", (req, res) => {
+    const { user_id, category_id, preferred_location_id,preferred_radius } = req.body;
+    if(!user_id ||!category_id ||!preferred_location_id ||!preferred_radius){
+        return res.status(400).json({ status: 'error', message: 'User ID, Category ID, Preferred Location ID, and Preferred Radius are required.' });
+    }
+    const query = `INSERT INTO user_preferences(user_id, category_id, preferred_location_id, preferred_radius) VALUES($1, $2, $3, $4) RETURNING *`;
+    client.query(query, [user_id, category_id, preferred_location_id, preferred_radius], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.status(201).json({ status:'success', data: result.rows[0] });
+    });
+
+
+})
+
+app.get('/user/:user_id/preferences',(req,res)=>{
+    const userId = parseInt(req.params.user_id);
+    const query = `SELECT * FROM user_preferences WHERE user_id = $1`;
+    client.query(query, [userId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ status: 'error', message: 'User preferences not found' });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+})
 
 app.listen(3000,()=>{
     console.log('Server is running on port 3000');
