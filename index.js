@@ -310,6 +310,43 @@ app.get('/user/:user_id/preferences',(req,res)=>{
     });
 })
 
+app.get('/user-preferences',(req,res)=>{
+    const query = `SELECT * FROM user_preferences`;
+    client.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.json({ status:'success', data: result.rows });
+    });
+
+})
+
+//------eventphotos-------------------- 
+
+app.post('/event_images',(req,res)=>{
+    const { event_id, image_url } = req.body;
+    if(!event_id ||!image_url){
+        return res.status(400).json({ status: 'error', message: 'Event ID and Image URL are required.' });
+    }
+    const query = `INSERT INTO event_images(event_id, image_url) VALUES($1, $2) RETURNING *`;
+    client.query(query, [event_id, image_url], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ status: 'error', message: err.message });
+        }
+        return res.status(201).json({ status:'success', data: result.rows[0] });
+    });
+
+
+})
+
+
+
+app.get('/event/:event_id/images',(req,res)=>{})
+
+app.get('/event-images',(req,res)=>{})
+
 app.listen(3000,()=>{
     console.log('Server is running on port 3000');
 })
