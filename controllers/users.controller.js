@@ -1,6 +1,5 @@
 const client = require('../connection');
 const bcrypt = require('bcrypt');
-const client = require('../connection');
 const jwt = require('jsonwebtoken');
 
 
