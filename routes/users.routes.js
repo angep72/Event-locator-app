@@ -2,6 +2,8 @@ const {Router}= require('express');
 const router = Router();
 const bcrypt = require('bcrypt');
 const client = require('../connection');
+const jwt = require('jsonwebtoken');
+
 router.get('/',(req,res)=>{
     client.query(`SELECT * FROM users`,(err,result)=>{
         if(err) throw err;

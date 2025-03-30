@@ -2,7 +2,6 @@ const client = require('./connection');
 const express = require('express');
 const app = express();
 app.use(express.json()); // For parsing application/json
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const redis = require('redis');
 const geolib = require('geolib');
