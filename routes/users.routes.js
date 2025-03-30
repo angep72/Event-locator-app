@@ -1,5 +1,6 @@
 const {Router}= require('express');
 const router = Router();
+const bcrypt = require('bcrypt');
 const client = require('../connection');
 router.get('/',(req,res)=>{
     client.query(`SELECT * FROM users`,(err,result)=>{
@@ -53,6 +54,26 @@ router.post("/", (req, res) => {
         return res.status(201).json({ status: 'success', data: result.rows[0] });
     });
 });
+
+
+router.post("/login", (req, res) => {
+    //use jwt token
+    const { email, password_hash } = req.body;
+    const userQuery = `SELECT * FROM users WHERE email=$1`;
+    client.query(userQuery, [email], (err, result) => {
+        if (err) {
+            return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
+        }
+        // Check if password matches
+        const user = result.rows[0];
+        if (!user || !bcrypt.compareSync(password_hash, user.password_hash)) {
+            return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
+        }
+        // Generate JWT token
+        const token = jwt.sign({ userId: user.id }, 'your_secret_key', { expiresIn: '1h' });
+        return res.json({ status:'success', token });
+    });
+})
 
 module.exports = router;
 
