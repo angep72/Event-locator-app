@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 app.use(express.json()); // For parsing application/json
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const redis = require('redis');
+const geolib = require('geolib');
 
 //"-----------------------------users endpoints-----------------------------"
 
@@ -410,29 +412,57 @@ app.get('/event-images',(req,res)=>{
 
 
 //-------------notification endpoints --------------------
-app.post('/notifications', async (req, res) => {
-    const { user_id, message, notification_type, event_id, seen } = req.body;
+
+const redisClient = redis.createClient();  // Connect to Redis
+
+app.post('/notifications/send', async (req, res) => {
+    const { event_id, event_name, event_category, event_lat, event_lon, event_start_time } = req.body;
   
     try {
-      // Insert notification into the database
-      const result = await client.query(
-        `INSERT INTO notifications (user_id, message, notification_type, event_id, seen) 
-         VALUES ($1, $2, $3, $4, $5) 
-         RETURNING notification_id, user_id, message, notification_type, event_id, seen, created_at`,
-        [user_id, message, notification_type, event_id, seen]
+      const users = await client.query(`
+        SELECT u.user_id, up.category_id, up.preferred_location_id, up.preferred_radius, l.latitude, l.longitude 
+        FROM users u
+        JOIN user_preferences up ON u.user_id = up.user_id
+        JOIN locations l ON up.preferred_location_id = l.location_id
+        WHERE up.category_id = $1`,
+        [event_category]
       );
   
-      // Get the inserted notification data
-      const notification = result.rows[0];
-      res.status(201).json({
-        message: 'Notification created successfully',
-        notification: notification,
+      if (users.rows.length === 0) {
+        return res.status(200).json({ message: 'No users found with matching preferences.' });
+      }
+  
+      // Step 2: Publish Notifications to Redis (Filtering by Location and Radius)
+      users.rows.forEach(user => {
+        // Check if the event is within the user's preferred radius
+        const userLocation = { latitude: user.latitude, longitude: user.longitude };
+        const eventLocation = { latitude: event_lat, longitude: event_lon };
+  
+        const distance = geolib.getDistance(userLocation, eventLocation);  // Distance in meters
+  
+        // If the event is within the preferred radius (converted to meters)
+        if (distance <= user.preferred_radius * 1000) {  // radius is in kilometers, so convert to meters
+          const message = JSON.stringify({
+            user_id: user.user_id,
+            message: `New event: ${event_name} is coming soon!`,
+            event_id: event_id,
+            event_start_time: event_start_time,
+            event_category: event_category,
+          });
+  
+          // Publish to Redis channel for the user
+          redisClient.publish(`user:${user.user_id}:notifications`, message);
+        }
       });
+  
+      return res.status(200).json({ message: 'Notifications queued successfully for users.' });
+  
     } catch (error) {
-      console.error('Error inserting notification:', error);
-      res.status(500).json({ error: 'Failed to create notification' });
-    }})
-
+      console.error('Error sending notifications:', error);
+      return res.status(500).json({ error: 'Failed to send notifications' });
+    }
+  });
+  
 
 
 
