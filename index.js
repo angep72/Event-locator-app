@@ -10,13 +10,6 @@ const usersRouter = require('./routes/users.routes');
 //"-----------------------------users endpoints-----------------------------"
 
 app.use("/users", usersRouter);
-
-
-
-
-
-
-
 //-----------------------------category endpoints-----------------------------
 app.post("/event-category", (req, res) => {
     const { category_name } = req.body;  
