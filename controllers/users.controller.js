@@ -1,4 +1,10 @@
 const client = require('../connection');
+const bcrypt = require('bcrypt');
+const client = require('../connection');
+const jwt = require('jsonwebtoken');
+
+
+
 const getAllUsers = (req,res)=>{
     client.query(`SELECT * FROM users`,(err,result)=>{
         if(err) throw err;

@@ -1,8 +1,5 @@
 const {Router}= require('express');
 const router = Router();
-const bcrypt = require('bcrypt');
-const client = require('../connection');
-const jwt = require('jsonwebtoken');
 const {getAllUsers, getSingleUser, updateUser, registerUser, loginUser} = require('../controllers/users.controller');
 
 router.get('/',getAllUsers)
