@@ -1,29 +1,17 @@
 const client = require('./connection');
 const express = require('express');
 const app = express();
-const bodyParser = require('body-parser');
 app.use(express.json()); // For parsing application/json
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const redis = require('redis');
 const geolib = require('geolib');
+const usersRouter = require('./routes/users.routes');
 
 //"-----------------------------users endpoints-----------------------------"
 
-app.get("/users",(req,res)=>{
-    client.query(`SELECT * FROM users`,(err,result)=>{
-        if(err) throw err;
-        res.send(result.rows);
-    })
-})
+app.use("/users", usersRouter);
 
-//route to get single user and use user_id
-    app.get("/users/:id",(req,res)=>{
-        client.query(`SELECT * FROM users WHERE user_id=${req.params.id}`,(err,result)=>{
-            if(err) throw err;
-            res.send(result.rows);
-        })
-    })
 
 //update a user 
     app.put("/users/:id", (req, res) => {
