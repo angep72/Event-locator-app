@@ -19,14 +19,7 @@ app.use("/event-category",categoryRouter);
 app.post("/location", locationRouter);
 
 
-app.get("/location", (req, res) => {
-    client.query(`SELECT * FROM locations`, (err, result) => {
-        if (err) {
-            return res.status(500).json({ status: 'error', message: err.message });
-        }
-        return res.json({ status:'success', data: result.rows });
-    });
-})
+app.get("/location", )
 
 //---------events endpoints-------------
 
