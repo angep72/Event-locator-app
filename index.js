@@ -6,7 +6,8 @@ const redis = require('redis');
 const geolib = require('geolib');
 const usersRouter = require('./routes/users.routes');
 const categoryRouter = require('./routes/category.routes');
-const locationRouter = require('./routes/location.routes')
+const locationRouter = require('./routes/location.routes');
+
 
 //"-----------------------------users endpoints-----------------------------"
 
@@ -18,8 +19,6 @@ app.use("/event-category",categoryRouter);
 
 app.post("/location", locationRouter);
 
-
-app.get("/location", )
 
 //---------events endpoints-------------
 
