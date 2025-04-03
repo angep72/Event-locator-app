@@ -36,7 +36,7 @@ The **Event Locator App** is an intuitive platform designed to help users discov
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/event-locator-app.git
+   git clone https://github.com/angep72/Event-locator-app.git
    cd event-locator-app
    ```
 
